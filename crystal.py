@@ -28,7 +28,7 @@ def check_popup(screenshot, template_image, threshold):
         pyautogui.moveTo(center_x, center_y, duration=0.1)
         time.sleep(0.15)
         pyautogui.click()
-        print(f"Closed Popup")
+        print(f"Closed popup.")
 
 def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
     # Load the template image
@@ -51,7 +51,7 @@ def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
             pyautogui.moveTo(bag_icon_x, bag_icon_y, duration=0.1)
             time.sleep(0.15)
             pyautogui.click()
-            print(f"Open Bag")
+            print(f"Open bag.")
             return False
     return True
 
@@ -62,7 +62,7 @@ def check_crystal(game_window, screenshot, crtstal_image, threshold):
     loc = np.where(res >= threshold)
 
     if len(loc[0]) > 0:
-        print(f"{game_window.title} Already Added")
+        print(f"{game_window.title} Already added.")
         return True
     else:
         return False
@@ -77,21 +77,32 @@ def check_empty(screenshot, empty_image, threshold):
         return True
     else:
         return False
+    
+def check_game_panel_open(screenshot, panel_images, threshold):
+    for image in panel_images:
+        template = cv2.imread(image)
 
-def find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image):
+        res = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+        loc = np.where(res >= threshold)
+
+        if len(loc[0]) > 0:
+            return True
+    return False
+
+def find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image, panel_images):
     threshold = 0.8
 
     for game_window in gw.getWindowsWithTitle("FARM"):
-        if not ("ONLINE" in game_window.title):
-            new_window_title = game_window.title + "ONLINE"
+        if not ("xONLINE" in game_window.title):
+            new_window_title = game_window.title + "xONLINE"
             set_window_title(game_window.title, new_window_title)
-        if ("FULL" in game_window.title):
-            substring_to_remove = "FULL"
+        if ("xFULL" in game_window.title):
+            substring_to_remove = "xFULL"
             new_window_title = game_window.title.replace(substring_to_remove, "")
             set_window_title(game_window.title, new_window_title)
 
     while True:
-        for game_window in gw.getWindowsWithTitle("ONLINE"):
+        for game_window in gw.getWindowsWithTitle("xONLINE"):
             print(f"Switch to {game_window.title}")
             # Activate the game window
             game_window.activate()
@@ -103,6 +114,10 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
 
             for image in popup_images:
                 check_popup(screenshot, image, threshold)
+
+            if check_game_panel_open(screenshot, panel_images, threshold):
+                print(f"Wait for character to get back.")
+                continue
 
             if check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
                 if check_empty(screenshot,empty_image, threshold):
@@ -132,7 +147,7 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
                             main_loc = np.where(main_res >= threshold)
 
                             if len(main_loc[0]) > 0:
-                                print(f"{game_window.title} Not Added.")
+                                print(f"{game_window.title} Not added.")
                                 # Calculate the center position of the found main image
                                 main_center_x = main_loc[1][0] + main_w // 2
                                 main_center_y = main_loc[0][0] + main_h // 2
@@ -152,19 +167,19 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
                                 pyautogui.moveTo(960, 540, duration=0.1)
                                 time.sleep(0.15)
                             else:
-                                substring_to_remove = "ONLINE"
+                                substring_to_remove = "xONLINE"
                                 new_window_title = game_window.title.replace(substring_to_remove,"")
                                 set_window_title(game_window.title, new_window_title)
-                                noti.send_line_notification(f"{game_window.title}\nOut of Crystal.")
-                                print(f"{game_window.title} Out of Crystal.")
+                                noti.send_line_notification(f"{game_window.title}\nOut of crystal.")
+                                print(f"{game_window.title} Out of crystal.")
                     else:
                         print(f"Skip {game_window.title}")
                 else:
-                    if not ("FULL" in game_window.title):
-                        new_window_title = game_window.title + "FULL"
+                    if not ("xFULL" in game_window.title):
+                        new_window_title = game_window.title + "xFULL"
                         set_window_title(game_window.title, new_window_title)
-                        noti.send_line_notification(f"{game_window.title}\nBag is Full.")
-                        print(f"{game_window.title} Bag is Full.")
+                        noti.send_line_notification(f"{game_window.title}\nBag is full.")
+                        print(f"{game_window.title} Bag is full.")
 
 if __name__ == "__main__":
     main_path = "images/"
@@ -175,9 +190,10 @@ if __name__ == "__main__":
     crystal_images = [f"{main_path}low_crystal.png", f"{main_path}high_crystal.png"]
     popup_images = [f"{main_path}cancel.png", f"{main_path}close.png"]
     empty_image = f"{main_path}empty.png"
+    panel_images = [f"{main_path}storage_panel.png", f"{main_path}shop_panel.png", f"{main_path}npc_panel.png"]
 
-    version = "v1.1.0"
+    version = "v1.2.0"
 
     ctypes.windll.kernel32.SetConsoleTitleW(f"YG Crystal {version}")
 
-    find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image)
+    find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image, panel_images)
