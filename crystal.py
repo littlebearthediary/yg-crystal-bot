@@ -30,7 +30,7 @@ def check_popup(screenshot, template_image, threshold):
         pyautogui.click()
         print(f"Closed Popup")
 
-def check_bag(screenshot, bag_image, bag_icon_image, threshold):
+def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
     # Load the template image
     image = cv2.imread(bag_image)
     bag_icon = cv2.imread(bag_icon_image)
@@ -52,6 +52,8 @@ def check_bag(screenshot, bag_image, bag_icon_image, threshold):
             time.sleep(0.15)
             pyautogui.click()
             print(f"Open Bag")
+            return False
+    return True
 
 def check_crystal(game_window, screenshot, crtstal_image, threshold):
     template = cv2.imread(crtstal_image)
@@ -64,12 +66,32 @@ def check_crystal(game_window, screenshot, crtstal_image, threshold):
         return True
     else:
         return False
+    
+def check_empty(screenshot, empty_image, threshold):
+    template = cv2.imread(empty_image)
 
-def find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image):
+    res = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+    loc = np.where(res >= threshold)
+
+    if len(loc[0]) > 0:
+        return True
+    else:
+        return False
+
+def find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image):
     threshold = 0.8
 
+    for game_window in gw.getWindowsWithTitle("FARM"):
+        if not ("ONLINE" in game_window.title):
+            new_window_title = game_window.title + "ONLINE"
+            set_window_title(game_window.title, new_window_title)
+        if ("FULL" in game_window.title):
+            substring_to_remove = "FULL"
+            new_window_title = game_window.title.replace(substring_to_remove, "")
+            set_window_title(game_window.title, new_window_title)
+
     while True:
-        for game_window in gw.getWindowsWithTitle("FARM"):
+        for game_window in gw.getWindowsWithTitle("ONLINE"):
             print(f"Switch to {game_window.title}")
             # Activate the game window
             game_window.activate()
@@ -79,65 +101,70 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
             screenshot = np.array(ImageGrab.grab())
             screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
 
-            check_bag(screenshot, bag_image, bag_icon_image, threshold)
-
             for image in popup_images:
                 check_popup(screenshot, image, threshold)
 
-            crystal_check = []
+            if check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
+                if check_empty(screenshot,empty_image, threshold):
+                    crystal_check = []
 
-            # Check if any crystal image is found
-            for image in crystal_images:
-                if check_crystal(game_window, screenshot, image, threshold):
-                    crystal_check.append(True)
+                    # Check if any crystal image is found
+                    for image in crystal_images:
+                        if check_crystal(game_window, screenshot, image, threshold):
+                            crystal_check.append(True)
 
-            if len(crystal_check) == 0:
-                # Match target template
-                target_template = cv2.imread(target_template_path)
-                target_h, target_w, _ = target_template.shape
-                target_res = cv2.matchTemplate(screenshot, target_template, cv2.TM_CCOEFF_NORMED)
-                target_loc = np.where(target_res >= threshold)
+                    if len(crystal_check) == 0:
+                        # Match target template
+                        target_template = cv2.imread(target_template_path)
+                        target_h, target_w, _ = target_template.shape
+                        target_res = cv2.matchTemplate(screenshot, target_template, cv2.TM_CCOEFF_NORMED)
+                        target_loc = np.where(target_res >= threshold)
 
-                if len(target_loc[0]) > 0:
-                    # Calculate the center position of the found target image
-                    target_center_x = target_loc[1][0] + target_w // 2
-                    target_center_y = target_loc[0][0] + target_h // 2
+                        if len(target_loc[0]) > 0:
+                            # Calculate the center position of the found target image
+                            target_center_x = target_loc[1][0] + target_w // 2
+                            target_center_y = target_loc[0][0] + target_h // 2
 
-                    # Match main template
-                    main_template = cv2.imread(main_template_path)
-                    main_h, main_w, _ = main_template.shape
-                    main_res = cv2.matchTemplate(screenshot, main_template, cv2.TM_CCOEFF_NORMED)
-                    main_loc = np.where(main_res >= threshold)
+                            # Match main template
+                            main_template = cv2.imread(main_template_path)
+                            main_h, main_w, _ = main_template.shape
+                            main_res = cv2.matchTemplate(screenshot, main_template, cv2.TM_CCOEFF_NORMED)
+                            main_loc = np.where(main_res >= threshold)
 
-                    if len(main_loc[0]) > 0:
-                        print(f"{game_window.title} Not Added.")
-                        # Calculate the center position of the found main image
-                        main_center_x = main_loc[1][0] + main_w // 2
-                        main_center_y = main_loc[0][0] + main_h // 2
+                            if len(main_loc[0]) > 0:
+                                print(f"{game_window.title} Not Added.")
+                                # Calculate the center position of the found main image
+                                main_center_x = main_loc[1][0] + main_w // 2
+                                main_center_y = main_loc[0][0] + main_h // 2
 
-                        # Drag object from main image to target image
-                        print(f"Adding.")
-                        pyautogui.moveTo(main_center_x, main_center_y, duration=0.1)
-                        time.sleep(0.15)
-                        pyautogui.mouseDown()
-                        time.sleep(0.15)
-                        pyautogui.moveTo(target_center_x, target_center_y + 10, duration=0.1)
-                        time.sleep(0.15)
-                        pyautogui.click(clicks=2, interval=0.2)
-                        time.sleep(0.15)
-                        print(f"Done.")
-                        # Reset pointer
-                        pyautogui.moveTo(960, 540, duration=0.1)
-                        time.sleep(0.15)
+                                # Drag object from main image to target image
+                                print(f"Adding.")
+                                pyautogui.moveTo(main_center_x, main_center_y, duration=0.1)
+                                time.sleep(0.15)
+                                pyautogui.mouseDown()
+                                time.sleep(0.15)
+                                pyautogui.moveTo(target_center_x, target_center_y + 30, duration=0.1)
+                                time.sleep(0.15)
+                                pyautogui.click(clicks=2, interval=0.2)
+                                time.sleep(0.15)
+                                print(f"Done.")
+                                # Reset pointer
+                                pyautogui.moveTo(960, 540, duration=0.1)
+                                time.sleep(0.15)
+                            else:
+                                substring_to_remove = "ONLINE"
+                                new_window_title = game_window.title.replace(substring_to_remove,"")
+                                set_window_title(game_window.title, new_window_title)
+                                noti.send_line_notification(f"{game_window.title}\nOut of Crystal.")
+                                print(f"{game_window.title} Out of Crystal.")
                     else:
-                        noti.send_line_notification(f"{game_window.title} Out of Crystal.")
-                        substring_to_remove = "FARM"
-                        new_window_title = game_window.title.replace(substring_to_remove,"")
+                        print(f"Skip {game_window.title}")
+                else:
+                    if not ("FULL" in game_window.title):
+                        new_window_title = game_window.title + "FULL"
                         set_window_title(game_window.title, new_window_title)
-                        print(f"{game_window.title} Out of Crystal.")
-
-            else:
-                print(f"Skip {game_window.title}")
+                        noti.send_line_notification(f"{game_window.title}\nBag is Full.")
+                        print(f"{game_window.title} Bag is Full.")
 
 if __name__ == "__main__":
     main_path = "images/"
@@ -147,12 +174,10 @@ if __name__ == "__main__":
     bag_icon_image = f"{main_path}bag_icon.png"
     crystal_images = [f"{main_path}low_crystal.png", f"{main_path}high_crystal.png"]
     popup_images = [f"{main_path}cancel.png", f"{main_path}close.png"]
+    empty_image = f"{main_path}empty.png"
 
-    version = "v1.0.0"
+    version = "v1.1.0"
 
     ctypes.windll.kernel32.SetConsoleTitleW(f"YG Crystal {version}")
 
-    try:
-        find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image)
-    except Exception as e:
-        print(f"Something went wrong: {str(e)}")
+    find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image)
