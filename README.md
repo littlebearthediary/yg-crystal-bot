@@ -1,1 +1,1 @@
-# yg-crystal-bot v1.1.0
+# yg-crystal-bot v1.2.1

@@ -52,6 +52,7 @@ def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
             time.sleep(0.15)
             pyautogui.click()
             print(f"Open bag.")
+            time.sleep(0.15)
             return False
     return True
 
@@ -192,7 +193,7 @@ if __name__ == "__main__":
     empty_image = f"{main_path}empty.png"
     panel_images = [f"{main_path}storage_panel.png", f"{main_path}shop_panel.png", f"{main_path}npc_panel.png"]
 
-    version = "v1.2.0"
+    version = "v1.2.1"
 
     ctypes.windll.kernel32.SetConsoleTitleW(f"YG Crystal {version}")
 
