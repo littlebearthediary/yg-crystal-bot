@@ -198,7 +198,7 @@ if __name__ == "__main__":
     empty_image = f"{main_path}empty.png"
     panel_images = [f"{main_path}storage_panel.png", f"{main_path}shop_panel.png", f"{main_path}npc_panel.png"]
 
-    version = "v1.2.1"
+    version = "v1.2.2"
 
     ctypes.windll.kernel32.SetConsoleTitleW(f"YG Crystal {version}")
 
