@@ -26,9 +26,11 @@ def check_popup(screenshot, template_image, threshold):
         center_y = loc[0][0] + h // 2
 
         pyautogui.moveTo(center_x, center_y, duration=0.1)
-        time.sleep(0.15)
+        time.sleep(0.1)
         pyautogui.click()
         print(f"Closed popup.")
+        return True
+    return False
 
 def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
     # Load the template image
@@ -49,10 +51,9 @@ def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
             bag_icon_y = bag_loc[0][0] + bag_icon_h // 2
 
             pyautogui.moveTo(bag_icon_x, bag_icon_y, duration=0.1)
-            time.sleep(0.15)
+            time.sleep(0.1)
             pyautogui.click()
             print(f"Open bag.")
-            time.sleep(0.15)
             return False
     return True
 
@@ -107,15 +108,20 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
             print(f"Switch to {game_window.title}")
             # Activate the game window
             game_window.activate()
-            time.sleep(0.15)
+            time.sleep(0.1)
 
             # Capture the game screen
             screenshot = np.array(ImageGrab.grab())
             screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
 
+            popup_check = []
             for image in popup_images:
-                check_popup(screenshot, image, threshold)
+                if check_popup(screenshot, image, threshold):
+                    popup_check.append(True)
 
+            if not len(popup_check) == 0:
+                continue
+            
             if check_game_panel_open(screenshot, panel_images, threshold):
                 print(f"Wait for character to get back.")
                 continue
@@ -156,17 +162,16 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
                                 # Drag object from main image to target image
                                 print(f"Adding.")
                                 pyautogui.moveTo(main_center_x, main_center_y, duration=0.1)
-                                time.sleep(0.15)
+                                time.sleep(0.1)
                                 pyautogui.mouseDown()
-                                time.sleep(0.15)
+                                time.sleep(0.1)
                                 pyautogui.moveTo(target_center_x, target_center_y + 30, duration=0.1)
-                                time.sleep(0.15)
+                                time.sleep(0.1)
                                 pyautogui.click(clicks=2, interval=0.2)
-                                time.sleep(0.15)
+                                time.sleep(0.1)
                                 print(f"Done.")
                                 # Reset pointer
-                                pyautogui.moveTo(960, 540, duration=0.1)
-                                time.sleep(0.15)
+                                pyautogui.moveTo(1270, 540, duration=0.1)
                             else:
                                 substring_to_remove = "xONLINE"
                                 new_window_title = game_window.title.replace(substring_to_remove,"")
