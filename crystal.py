@@ -32,6 +32,22 @@ def check_popup(screenshot, template_image, threshold):
         return True
     return False
 
+def check_connection(game_window, screenshot, warning_image, threshold):
+    template = cv2.imread(warning_image)
+
+    res = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+    loc = np.where(res >= threshold)
+
+    if len(loc[0]) > 0:
+        substring_to_remove = "xONLINE"
+        new_window_title = game_window.title.replace(substring_to_remove, "")
+        set_window_title(game_window.title, new_window_title)
+        
+        print(f"{game_window.title} Disconnected.")
+        noti.send_line_notification(f"{game_window.title}\nDisconnected.")
+        return False
+    return True
+
 def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
     # Load the template image
     image = cv2.imread(bag_image)
@@ -91,7 +107,7 @@ def check_game_panel_open(screenshot, panel_images, threshold):
             return True
     return False
 
-def find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image, panel_images):
+def find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image, panel_images, warning_image):
     threshold = 0.8
 
     for game_window in gw.getWindowsWithTitle("FARM"):
@@ -113,6 +129,9 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
             # Capture the game screen
             screenshot = np.array(ImageGrab.grab())
             screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+
+            if not check_connection(game_window, screenshot, warning_image, threshold):
+                continue
 
             popup_check = []
             for image in popup_images:
@@ -197,9 +216,10 @@ if __name__ == "__main__":
     popup_images = [f"{main_path}cancel.png", f"{main_path}close.png"]
     empty_image = f"{main_path}empty.png"
     panel_images = [f"{main_path}storage_panel.png", f"{main_path}shop_panel.png", f"{main_path}npc_panel.png"]
+    warning_image = f"{main_path}warning.png"
 
     version = "v1.2.2"
 
     ctypes.windll.kernel32.SetConsoleTitleW(f"YG Crystal {version}")
 
-    find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image, panel_images)
+    find_image_and_drag(main_template_path, target_template_path, crystal_images, popup_images, bag_image, bag_icon_image, empty_image, panel_images, warning_image)
