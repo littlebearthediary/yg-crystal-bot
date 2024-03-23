@@ -213,7 +213,7 @@ if __name__ == "__main__":
     bag_image = f"{main_path}bag.png"
     bag_icon_image = f"{main_path}bag_icon.png"
     crystal_images = [f"{main_path}low_crystal.png", f"{main_path}high_crystal.png"]
-    popup_images = [f"{main_path}cancel.png", f"{main_path}close.png"]
+    popup_images = [f"{main_path}cancel.png", f"{main_path}close.png", f"{main_path}popup_message.png"]
     empty_image = f"{main_path}empty.png"
     panel_images = [f"{main_path}storage_panel.png", f"{main_path}shop_panel.png", f"{main_path}npc_panel.png"]
     warning_image = f"{main_path}warning.png"
