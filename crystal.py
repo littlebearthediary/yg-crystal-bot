@@ -130,8 +130,8 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
             screenshot = np.array(ImageGrab.grab())
             screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
 
-            if not check_connection(game_window, screenshot, warning_image, threshold):
-                continue
+            # if not check_connection(game_window, screenshot, warning_image, threshold):
+            #     continue
 
             popup_check = []
             for image in popup_images:
