@@ -71,6 +71,11 @@ def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
             pyautogui.click()
             print(f"Open bag.")
             return False
+        pyautogui.moveTo(930, 750, duration=0.1)
+        time.sleep(0.1)
+        pyautogui.click()
+        print(f"Open bag.")
+        return False
     return True
 
 def check_crystal(game_window, screenshot, crtstal_image, threshold):
