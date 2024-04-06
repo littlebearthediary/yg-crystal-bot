@@ -28,6 +28,8 @@ def check_popup(screenshot, template_image, threshold):
         pyautogui.moveTo(center_x, center_y, duration=0.1)
         time.sleep(0.1)
         pyautogui.click()
+        time.sleep(0.1)
+        pyautogui.moveTo(1270, 540, duration=0.1)
         print(f"Closed popup.")
         return True
     return False
@@ -70,13 +72,13 @@ def check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
             time.sleep(0.1)
             pyautogui.click()
             print(f"Open bag.")
-            return False
+            return True
         pyautogui.moveTo(930, 750, duration=0.1)
         time.sleep(0.1)
         pyautogui.click()
         print(f"Open bag.")
-        return False
-    return True
+        return True
+    return False
 
 def check_crystal(game_window, screenshot, crtstal_image, threshold):
     template = cv2.imread(crtstal_image)
@@ -138,78 +140,78 @@ def find_image_and_drag(main_template_path, target_template_path, crystal_images
             # if not check_connection(game_window, screenshot, warning_image, threshold):
             #     continue
 
-            popup_check = []
             for image in popup_images:
                 if check_popup(screenshot, image, threshold):
-                    popup_check.append(True)
+                    screenshot = np.array(ImageGrab.grab())
+                    screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
 
-            if not len(popup_check) == 0:
-                continue
-            
             if check_game_panel_open(screenshot, panel_images, threshold):
                 print(f"Wait for character to get back.")
                 continue
 
             if check_bag_open(screenshot, bag_image, bag_icon_image, threshold):
-                if check_empty(screenshot,empty_image, threshold):
-                    crystal_check = []
+                screenshot = np.array(ImageGrab.grab())
+                screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
 
-                    # Check if any crystal image is found
-                    for image in crystal_images:
-                        if check_crystal(game_window, screenshot, image, threshold):
-                            crystal_check.append(True)
+            if check_empty(screenshot,empty_image, threshold):
+                crystal_check = []
 
-                    if len(crystal_check) == 0:
-                        # Match target template
-                        target_template = cv2.imread(target_template_path)
-                        target_h, target_w, _ = target_template.shape
-                        target_res = cv2.matchTemplate(screenshot, target_template, cv2.TM_CCOEFF_NORMED)
-                        target_loc = np.where(target_res >= threshold)
+                # Check if any crystal image is found
+                for image in crystal_images:
+                    if check_crystal(game_window, screenshot, image, threshold):
+                        crystal_check.append(True)
 
-                        if len(target_loc[0]) > 0:
-                            # Calculate the center position of the found target image
-                            target_center_x = target_loc[1][0] + target_w // 2
-                            target_center_y = target_loc[0][0] + target_h // 2
+                if len(crystal_check) == 0:
+                    # Match target template
+                    target_template = cv2.imread(target_template_path)
+                    target_h, target_w, _ = target_template.shape
+                    target_res = cv2.matchTemplate(screenshot, target_template, cv2.TM_CCOEFF_NORMED)
+                    target_loc = np.where(target_res >= threshold)
 
-                            # Match main template
-                            main_template = cv2.imread(main_template_path)
-                            main_h, main_w, _ = main_template.shape
-                            main_res = cv2.matchTemplate(screenshot, main_template, cv2.TM_CCOEFF_NORMED)
-                            main_loc = np.where(main_res >= threshold)
+                    if len(target_loc[0]) > 0:
+                        # Calculate the center position of the found target image
+                        target_center_x = target_loc[1][0] + target_w // 2
+                        target_center_y = target_loc[0][0] + target_h // 2
 
-                            if len(main_loc[0]) > 0:
-                                print(f"{game_window.title} Not added.")
-                                # Calculate the center position of the found main image
-                                main_center_x = main_loc[1][0] + main_w // 2
-                                main_center_y = main_loc[0][0] + main_h // 2
+                        # Match main template
+                        main_template = cv2.imread(main_template_path)
+                        main_h, main_w, _ = main_template.shape
+                        main_res = cv2.matchTemplate(screenshot, main_template, cv2.TM_CCOEFF_NORMED)
+                        main_loc = np.where(main_res >= threshold)
 
-                                # Drag object from main image to target image
-                                print(f"Adding.")
-                                pyautogui.moveTo(main_center_x, main_center_y, duration=0.1)
-                                time.sleep(0.1)
-                                pyautogui.mouseDown()
-                                time.sleep(0.1)
-                                pyautogui.moveTo(target_center_x, target_center_y + 30, duration=0.1)
-                                time.sleep(0.1)
-                                pyautogui.click(clicks=2, interval=0.2)
-                                time.sleep(0.1)
-                                print(f"Done.")
-                                # Reset pointer
-                                pyautogui.moveTo(1270, 540, duration=0.1)
-                            else:
-                                substring_to_remove = "xONLINE"
-                                new_window_title = game_window.title.replace(substring_to_remove,"")
-                                set_window_title(game_window.title, new_window_title)
-                                noti.send_line_notification(f"{game_window.title}\nOut of crystal.")
-                                print(f"{game_window.title} Out of crystal.")
-                    else:
-                        print(f"Skip {game_window.title}")
+                        if len(main_loc[0]) > 0:
+                            print(f"{game_window.title} Not added.")
+                            # Calculate the center position of the found main image
+                            main_center_x = main_loc[1][0] + main_w // 2
+                            main_center_y = main_loc[0][0] + main_h // 2
+
+                            # Drag object from main image to target image
+                            print(f"Adding.")
+                            pyautogui.moveTo(main_center_x, main_center_y, duration=0.1)
+                            time.sleep(0.1)
+                            pyautogui.mouseDown()
+                            time.sleep(0.1)
+                            pyautogui.moveTo(target_center_x, target_center_y + 30, duration=0.1)
+                            time.sleep(0.1)
+                            pyautogui.click(clicks=2, interval=0.2)
+                            time.sleep(0.1)
+                            print(f"Done.")
+                            # Reset pointer
+                            pyautogui.moveTo(1270, 540, duration=0.1)
+                        else:
+                            substring_to_remove = "xONLINE"
+                            new_window_title = game_window.title.replace(substring_to_remove,"")
+                            set_window_title(game_window.title, new_window_title)
+                            noti.send_line_notification(f"{game_window.title}\nOut of crystal.")
+                            print(f"{game_window.title} Out of crystal.")
                 else:
-                    if not ("xFULL" in game_window.title):
-                        new_window_title = game_window.title + "xFULL"
-                        set_window_title(game_window.title, new_window_title)
-                        noti.send_line_notification(f"{game_window.title}\nBag is full.")
-                        print(f"{game_window.title} Bag is full.")
+                    print(f"Skip {game_window.title}")
+            else:
+                if not ("xFULL" in game_window.title):
+                    new_window_title = game_window.title + "xFULL"
+                    set_window_title(game_window.title, new_window_title)
+                    noti.send_line_notification(f"{game_window.title}\nBag is full.")
+                    print(f"{game_window.title} Bag is full.")
 
 if __name__ == "__main__":
     main_path = "images/"
@@ -223,7 +225,7 @@ if __name__ == "__main__":
     panel_images = [f"{main_path}storage_panel.png", f"{main_path}shop_panel.png", f"{main_path}npc_panel.png"]
     warning_image = f"{main_path}warning.png"
 
-    version = "v1.2.2"
+    version = "v1.2.3"
 
     ctypes.windll.kernel32.SetConsoleTitleW(f"YG Crystal {version}")
 
